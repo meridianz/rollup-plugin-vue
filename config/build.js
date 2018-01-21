@@ -30,6 +30,7 @@ rollup.rollup({
             'de-indent',
             'debug',
             'fs',
+            'util',
             'hash-sum',
             'html-minifier',
             'less',

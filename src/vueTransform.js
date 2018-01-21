@@ -1,14 +1,18 @@
+import fs from 'fs'
+import util from 'util'
 import deIndent from 'de-indent'
 import htmlMinifier from 'html-minifier'
 import parse5 from 'parse5'
 import templateValidator from 'vue-template-validator'
 import { compile } from './style/index'
 import templateProcessor from './template/index'
-import { relative } from 'path'
+import { relative, dirname, resolve } from 'path'
 import MagicString from 'magic-string'
 import debug from './debug'
 import { injectModule, injectScopeID, injectTemplate, injectRender } from './injections'
 import genScopeID from './gen-scope-id'
+
+const readFile = util.promisify(fs.readFile)
 
 function getNodeAttrs (node) {
     if (node.attrs) {
@@ -139,9 +143,15 @@ async function processScriptForRender (script, template, lang, id, options) {
 // eslint-disable-next-line complexity
 async function processStyle (styles, id, content, options) {
     debug(`Process styles: ${id}`)
+
     const outputs = []
     for (let i = 0; i < styles.length; i += 1) {
         const style = styles[i]
+
+        if (style.attrs.src) {
+            let path = resolve(dirname(id), style.attrs.src)
+            style.code = await readFile(path)
+        }
 
         const code = deIndent(
             padContent(content.slice(0, content.indexOf(style.code))) + style.code
